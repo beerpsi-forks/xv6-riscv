@@ -12,7 +12,12 @@ initcode
 initcode.out
 kernelmemfs
 mkfs
+!mkfs/mkfs.c
 kernel/kernel
 user/usys.S
 .gdbinit
 TAGS
+.cache
+.zed
+compile_commands.json
+xv6-format.cfg
