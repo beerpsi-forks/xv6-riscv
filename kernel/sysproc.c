@@ -6,6 +6,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "vm.h"
+#include "getproc.h"
 
 uint64
 sys_exit(void)
@@ -47,10 +48,9 @@ sys_sbrk(void)
   argint(1, &t);
   addr = myproc()->sz;
 
-  if(t == SBRK_EAGER || n < 0) {
-    if(growproc(n) < 0) {
+  if(t == SBRK_EAGER || n < 0){
+    if(growproc(n) < 0)
       return -1;
-    }
   } else {
     // Lazily allocate memory for this process: increase its memory
     // size but don't allocate memory. If the processes uses the
@@ -106,4 +106,12 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_getprocs(void)
+{
+  uint64 addr;
+  argaddr(0, &addr); // Get the pointer passed from user space
+  return getprocs(addr);
 }
