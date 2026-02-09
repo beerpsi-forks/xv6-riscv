@@ -24,6 +24,7 @@ int getpid(void);
 char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
+int trace(int);
 
 struct procinfo;
 int getprocs(struct procinfo*);
