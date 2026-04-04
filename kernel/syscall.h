@@ -22,3 +22,5 @@
 #define SYS_close  21
 #define SYS_getprocs 22
 #define SYS_trace  23
+#define SYS_mmap   24
+#define SYS_munmap 25

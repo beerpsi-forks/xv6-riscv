@@ -103,6 +103,8 @@ extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_getprocs(void);
 extern uint64 sys_trace(void);
+extern uint64 sys_mmap(void);
+extern uint64 sys_munmap(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -130,6 +132,8 @@ static uint64 (*syscalls[])(void) = {
   [SYS_close]   sys_close,
   [SYS_getprocs] sys_getprocs,
   [SYS_trace]   sys_trace,
+  [SYS_mmap]    sys_mmap,
+  [SYS_munmap]  sys_munmap,
 };
 
 // Array of syscall names indexed by syscall number.
@@ -157,6 +161,8 @@ static char *syscall_names[] = {
 [SYS_close]   "close",
 [SYS_getprocs] "getprocs",
 [SYS_trace]   "trace",
+[SYS_mmap]    "mmap",
+[SYS_munmap]  "munmap",
 };
 
 void
