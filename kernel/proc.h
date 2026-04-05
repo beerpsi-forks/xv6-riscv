@@ -81,6 +81,21 @@ struct trapframe {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+// Forward declaration of shmem_region in vm.c
+struct shmem_region;
+
+// Maximum number of mappings per process
+#define NVMAS 16
+
+struct vma {
+  int used;       // whether the vma slot is used
+  uint64 addr;    // page-aligned start VA
+  uint64 length;  // page-aligned length in bytes
+  int prot;       // protection flags
+  int flags;      // MAP_SHARED or MAP_PRIVATE
+  struct shmem_region* shared; // non-NULL if MAP_SHARED
+};
+
 // Per-process state
 struct proc {
   struct spinlock lock;
@@ -105,4 +120,5 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int trace_mask;              // Trace system call mask
+  struct vma vmas[NVMAS];       // mmap regions
 };

@@ -128,7 +128,15 @@ sys_getprocs(void)
 uint64
 sys_mmap(void)
 {
-  return mmap();
+  uint64 addr, length;
+  int prot, flags;
+  
+  argaddr(0, &addr);
+  argaddr(1, &length);
+  argint(2, &prot);
+  argint(3, &flags);
+  
+  return mmap(addr, length, prot, flags);
 }
 
 uint64

@@ -25,7 +25,7 @@ char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
 int trace(int);
-uint64 mmap(void);
+uint64 mmap(uint64, uint64, int, int);
 int munmap(uint64);
 
 struct procinfo;

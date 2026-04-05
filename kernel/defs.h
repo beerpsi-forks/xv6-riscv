@@ -4,6 +4,7 @@ struct file;
 struct inode;
 struct pipe;
 struct proc;
+struct vma;
 struct spinlock;
 struct sleeplock;
 struct stat;
@@ -171,8 +172,10 @@ int             copyinstr(pagetable_t, char *, uint64, uint64);
 int             ismapped(pagetable_t, uint64);
 uint64          vmfault(pagetable_t, uint64, int);
 void            init_shmem(void);
-uint64          mmap(void);
-int             munmap(uint64 va);
+uint64          mmap(uint64, uint64, int, int);
+int             munmap(uint64);
+void            do_munmap(struct proc*, struct vma*);
+int             vma_fork(struct proc*, struct proc*);
 
 // plic.c
 void            plicinit(void);

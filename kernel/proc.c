@@ -158,6 +158,11 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
+  
+  for(int i = 0; i < NVMAS; i++)
+    if(p->vmas[i].used)
+      do_munmap(p, &p->vmas[i]);
+  
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
   p->pagetable = 0;
@@ -270,6 +275,12 @@ kfork(void)
     release(&np->lock);
     return -1;
   }
+  if (vma_fork(p, np) < 0) {
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
+
   np->sz = p->sz;
 
   // copy saved user registers.
