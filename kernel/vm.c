@@ -745,6 +745,7 @@ mmap(uint64 addr, uint64 length, int prot, int flags)
   // Eagerly allocate and map physical pages.
   int pte_prot  = prot_to_pte(prot);
   uint64 npages = length / PGSIZE;
+  //Eager Allocation
   for(uint64 i = 0; i < npages; i++){
     char *mem = kalloc();
     if(mem == 0)

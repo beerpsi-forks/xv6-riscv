@@ -165,6 +165,76 @@ static char *syscall_names[] = {
 [SYS_munmap]  "munmap",
 };
 
+// Argument type tags.
+#define ARG_NONE 0   // no argument (end of list)
+#define ARG_INT  1   // integer / fd
+#define ARG_PTR  2   // raw pointer (printed as hex)
+#define ARG_STR  3   // pointer to null-terminated string
+
+// Per-syscall argument descriptors.
+// Each entry is a 0-terminated array of ARG_* tags, at most 6 args.
+static char syscall_args[][6] = {
+  [SYS_fork]    = {ARG_NONE},
+  [SYS_exit]    = {ARG_INT,  ARG_NONE},
+  [SYS_wait]    = {ARG_PTR,  ARG_NONE},
+  [SYS_pipe]    = {ARG_PTR,  ARG_NONE},
+  [SYS_read]    = {ARG_INT,  ARG_PTR,  ARG_INT,  ARG_NONE},
+  [SYS_kill]    = {ARG_INT,  ARG_NONE},
+  [SYS_exec]    = {ARG_STR,  ARG_PTR,  ARG_NONE},
+  [SYS_fstat]   = {ARG_INT,  ARG_PTR,  ARG_NONE},
+  [SYS_chdir]   = {ARG_STR,  ARG_NONE},
+  [SYS_dup]     = {ARG_INT,  ARG_NONE},
+  [SYS_getpid]  = {ARG_NONE},
+  [SYS_sbrk]    = {ARG_INT,  ARG_INT,  ARG_NONE},
+  [SYS_pause]   = {ARG_INT,  ARG_NONE},
+  [SYS_uptime]  = {ARG_NONE},
+  [SYS_open]    = {ARG_STR,  ARG_INT,  ARG_NONE},
+  [SYS_write]   = {ARG_INT,  ARG_PTR,  ARG_INT,  ARG_NONE},
+  [SYS_mknod]   = {ARG_STR,  ARG_INT,  ARG_INT,  ARG_NONE},
+  [SYS_unlink]  = {ARG_STR,  ARG_NONE},
+  [SYS_link]    = {ARG_STR,  ARG_STR,  ARG_NONE},
+  [SYS_mkdir]   = {ARG_STR,  ARG_NONE},
+  [SYS_close]   = {ARG_INT,  ARG_NONE},
+  [SYS_getprocs]= {ARG_PTR,  ARG_NONE},
+  [SYS_trace]   = {ARG_INT,  ARG_NONE},
+  [SYS_mmap]    = {ARG_PTR,  ARG_INT,  ARG_INT,  ARG_INT,  ARG_INT,  ARG_INT},
+  [SYS_munmap]  = {ARG_PTR,  ARG_INT,  ARG_NONE},
+};
+
+// Print arguments for syscall number `num`.
+// Must be called BEFORE the syscall executes (raw registers still intact).
+static void
+print_syscall_args(int num)
+{
+  char strbuf[64];
+  char *args = syscall_args[num];
+  int first = 1;
+
+  printf("(");
+  for(int i = 0; i < 6 && args[i] != ARG_NONE; i++){
+    uint64 val = argraw(i);
+    if(!first)
+      printf(", ");
+    first = 0;
+
+    switch(args[i]){
+    case ARG_INT:
+      printf("%d", (int)val);
+      break;
+    case ARG_PTR:
+      printf("%p", (void*)val);
+      break;
+    case ARG_STR:
+      if(fetchstr(val, strbuf, sizeof(strbuf)) < 0)
+        printf("%p", (void*)val);   // fallback if fail copying
+      else
+        printf("\"%s\"", strbuf);
+      break;
+    }
+  }
+  printf(")");
+}
+
 void
 syscall(void)
 {
@@ -173,18 +243,23 @@ syscall(void)
 
   num = p->trapframe->a7;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+    // If this syscall is being traced, print name + args BEFORE executing
+    // (registers a0-a5 still hold raw arguments at this point).
+    if((1 << num) & p->trace_mask) {
+      printf("%d: syscall %s", p->pid, syscall_names[num]);
+      print_syscall_args(num);
+    }
+
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
     p->trapframe->a0 = syscalls[num]();
 
-    // If this syscall is being traced, print the trace info.
+    // Print return value after execution.
     if((1 << num) & p->trace_mask) {
-      printf("%d: syscall %s -> %ld\n",
-              p->pid, syscall_names[num], p->trapframe->a0);
+      printf(" -> %ld\n", p->trapframe->a0);
     }
   } else {
-    printf("%d %s: unknown sys call %d\n",
-            p->pid, p->name, num);
+    printf("%d %s: unknown sys call %d\n", p->pid, p->name, num);
     p->trapframe->a0 = -1;
   }
 }
