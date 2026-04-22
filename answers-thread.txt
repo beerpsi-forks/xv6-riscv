@@ -1,0 +1,9 @@
+Race condition causing missing key (example with one hash bucket):
+
+1. Thread A starts put(kA, vA), computes bucket i, and reads current head table[i] = H.
+2. Thread B starts put(kB, vB), computes the same bucket i, also reads table[i] = H.
+3. Thread B inserts node B at head: B->next = H; table[i] = B.
+4. Thread A resumes with stale view (still thinks head is H), inserts node A: A->next = H; table[i] = A.
+5. Final list head is A, and node B is no longer reachable from table[i].
+
+Result: key kB is lost, so later get(kB) may report the key as missing.
